@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickPDF — PDF to DOCX Converter</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- Ambient background: slow-moving mesh gradient + floating orbs + noise -->
+  <div class="background" aria-hidden="true">
+    <div class="mesh"></div>
+    <div class="orb orb--one"></div>
+    <div class="orb orb--two"></div>
+    <div class="orb orb--three"></div>
+    <div class="grid-overlay"></div>
+    <div class="noise"></div>
+  </div>
+
+  <main class="page">
+
+    <header class="brand">
+      <div class="brand__mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon">
+          <path d="M12 2 L20 6.5 V17.5 L12 22 L4 17.5 V6.5 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M12 2 V22 M4 6.5 L20 17.5 M20 6.5 L4 17.5" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+        </svg>
+      </div>
+      <span class="brand__name">QuickPDF</span>
+    </header>
+
+    <section class="card" id="card">
+
+      <div class="card__intro">
+        <h1 class="title">PDF to DOCX Converter</h1>
+        <p class="subtitle">Convert PDF documents into editable Word files.</p>
+        <ul class="tags">
+          <li><span class="dot"></span>Fast</li>
+          <li><span class="dot"></span>Offline</li>
+          <li><span class="dot"></span>Private</li>
+        </ul>
+      </div>
+
+      <!-- STATE: idle / drag&drop -->
+      <div class="panel" id="panel-idle" data-state="active">
+        <label for="file-input" class="dropzone" id="dropzone">
+          <div class="dropzone__icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--upload">
+              <path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="dropzone__title">Drag &amp; drop your PDF here</p>
+          <p class="dropzone__or">or</p>
+          <span class="btn btn--ghost" id="choose-file-btn">Choose File</span>
+          <input type="file" id="file-input" accept="application/pdf,.pdf" hidden />
+        </label>
+
+        <div class="selected-file" id="selected-file" hidden>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--sm">
+            <path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M14 3v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          <span class="selected-file__name" id="selected-file-name">document.pdf</span>
+          <button type="button" class="selected-file__clear" id="clear-file-btn" aria-label="Remove file">&times;</button>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--full" id="convert-btn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--sm">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Convert to DOCX
+        </button>
+      </div>
+
+      <!-- STATE: loading -->
+      <div class="panel panel--center" id="panel-loading" data-state="hidden" hidden>
+        <div class="spinner" role="status" aria-label="Converting">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--lg icon--spin">
+            <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="panel__title">Converting your document</p>
+        <p class="panel__subtitle">This only takes a moment.</p>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+      </div>
+
+      <!-- STATE: success -->
+      <div class="panel panel--center" id="panel-success" data-state="hidden" hidden>
+        <div class="result-icon result-icon--success">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--lg">
+            <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </div>
+        <p class="panel__title">Conversion complete</p>
+        <p class="panel__subtitle" id="success-filename">Your document is ready.</p>
+        <a class="btn btn--primary btn--full" id="download-btn" href="#" download>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--sm">
+            <path d="M12 4v11M12 15l-4-4M12 15l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Download DOCX
+        </a>
+        <button type="button" class="btn btn--text" id="convert-another-btn">Convert another file</button>
+      </div>
+
+      <!-- STATE: error -->
+      <div class="panel panel--center" id="panel-error" data-state="hidden" hidden>
+        <div class="result-icon result-icon--error">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--lg">
+            <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="16.2" r="0.9" fill="currentColor"/>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </div>
+        <p class="panel__title">Something went wrong</p>
+        <p class="panel__subtitle" id="error-message">Unable to convert this PDF.</p>
+        <button type="button" class="btn btn--primary btn--full" id="try-again-btn">Try again</button>
+      </div>
+
+    </section>
+
+    <footer class="footnote">
+      <span>Offline</span>
+      <span class="footnote__sep">·</span>
+      <span>Private</span>
+      <span class="footnote__sep">·</span>
+      <span>Secure</span>
+    </footer>
+
+  </main>
+
+  <!-- Desktop-only: shown after a native save to the Downloads folder.
+       Hidden/unused entirely in plain browser mode. -->
+  <div class="modal-overlay" id="download-success-modal" hidden>
+    <div class="modal">
+      <div class="result-icon result-icon--success">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--lg">
+          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </div>
+      <h2 class="modal__title">Download Complete!</h2>
+      <p class="panel__subtitle">Your document has been saved successfully.</p>
+
+      <div class="modal__details">
+        <div class="modal__detail-row">
+          <span class="modal__detail-label">Location</span>
+          <span class="modal__detail-value" id="modal-location">Downloads</span>
+        </div>
+        <div class="modal__detail-row">
+          <span class="modal__detail-label">Filename</span>
+          <span class="modal__detail-value" id="modal-filename">document.docx</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn--primary btn--full" id="modal-open-file-btn">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--sm">
+          <path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M14 3v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+        Open File
+      </button>
+      <button type="button" class="btn btn--ghost btn--full" id="modal-open-folder-btn">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--sm">
+          <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l1.7 2H19.5A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+        Open Downloads Folder
+      </button>
+      <button type="button" class="btn btn--text" id="modal-convert-another-btn">Convert another file</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="download-error-modal" hidden>
+    <div class="modal">
+      <div class="result-icon result-icon--error">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--lg">
+          <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="16.2" r="0.9" fill="currentColor"/>
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </div>
+      <h2 class="modal__title">Couldn't Save File</h2>
+      <p class="panel__subtitle" id="modal-error-message">Something went wrong while saving.</p>
+      <button type="button" class="btn btn--primary btn--full" id="modal-error-close-btn">Close</button>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
