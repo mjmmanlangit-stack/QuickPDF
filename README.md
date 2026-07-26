@@ -176,3 +176,5 @@ The following features are intentionally **not implemented** in this version, to
 ## License
 
 This project is provided under the MIT License. See `LICENSE` for details.
+
+Ang pinaka importante is kahit anong hirap ng buhay, wag na wag ka magshash*bu.
